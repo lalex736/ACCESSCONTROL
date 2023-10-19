@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ejemplo de Solicitud Fetch con jQuery</title>
+    <!-- Agregar los estilos de Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <table id="attendance-table" border="1">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <!-- Los encabezados de fecha serán generados dinámicamente aquí -->
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
+    <button id="export-button" class="btn btn-success">Export to Excel</button>
+
+    <!-- Agregar un botón de exportación a Excel -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-tableexport/1.3.0/js/tableExport.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script>
+        // Hacer una solicitud Fetch a una API
+        $.ajax({
+            url: 'http://localhost:3000/users-by-registers',
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                const tableBody = $('#table-body');
+
+                // Obtén la lista de fechas únicas a partir de los datos
+                const uniqueDates = Array.from(new Set(data.flatMap(item => Object.keys(item.registrosDia))))
+
+                // Agrega encabezados de fecha dinámicos
+                const headerRow = $('#attendance-table thead tr');
+                uniqueDates.forEach(date => {
+                    headerRow.append(`<th>${date}</th>`);
+                });
+                data.forEach(function (item) {
+                    // Agregar cada fila de datos a la tabla
+                    let row = '<tr><td>' + item.userId +
+                        '</td><td>' + item.name;
+
+                    uniqueDates.forEach(date => {
+                        row += '<td>';
+                        if (item.registrosDia[date]) {
+                            item.registrosDia[date].forEach(function (registro) {
+                                row += registro.recordTime + '<br>';
+                            });
+                        }
+                        row += '</td>';
+                    });
+                    tableBody.append(row);
+                });
+            },
+            error: function () {
+                console.log('Error al cargar los datos de la API.');
+            }
+        });
+
+        // Agregar la funcionalidad de exportación al botón
+        $('#export-button').on('click', function () {
+            // Exportar la tabla a un archivo Excel
+            $('#attendance-table').tableExport({ type: 'excel', escape: 'false' });
+        });
+        $(document).ready(function() {
+    $('#attendance-table').DataTable( {
+        dom: 'Bfrtip',
+        buttons: [
+            'copyHtml5',
+            'excelHtml5',
+            'csvHtml5',
+            'pdfHtml5'
+        ]
+    } );
+} );
+    </script>
+</body>
+
+</html>

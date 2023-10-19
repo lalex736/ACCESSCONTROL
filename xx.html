@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ejemplo de Solicitud Fetch con jQuery</title>
+    <!-- Agregar los estilos de Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4">Datos de la API</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Registro</th>
+                    <th>TipoUsuario</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Aquí se llenarán los datos de la API -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Agregar jQuery y Bootstrap JS al final del documento -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Hacer una solicitud Fetch a una API
+        $.ajax({
+            url: 'http://localhost:3000/users-by-registers',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                console.log(J)
+                // Función que se ejecuta cuando la solicitud es exitosa
+                const tableBody = $('#table-body');
+                data.forEach(function(item) {
+                    // Agregar cada fila de datos a la tabla
+                    const row = '<tr><td>' + item.userId + '</td><td>' + item.name + '</td><td>' + item.name + '</td><td>' + item.role + '</td></tr>';
+                    tableBody.append(row);
+                });
+            },
+            error: function() {
+                // Función que se ejecuta en caso de error
+                console.log('Error al cargar los datos de la API.');
+            }
+        });
+    </script>
+</body>
+</html>
