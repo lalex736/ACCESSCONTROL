@@ -3,23 +3,65 @@
 
 <head>
     <title>Ejemplo de Solicitud Fetch con jQuery</title>
-    <!-- Agregar los estilos de Bootstrap -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+          #modal-carga {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente oscuro */
+            z-index: 9999;
+            text-align: center;
+        }
+
+        #cargando {
+            width: 300px;
+            height: 300px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* background: white; */
+            padding: 20px;
+            border-radius: 10px;
+            /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
+        }
+
+    </style>
 </head>
 
 <body>
-
-    <table id="attendance-table" border="1">
+    <label for="fecha">Selecciona una fecha:</label>
+    <input type="month" id="fecha" name="fecha">
+    <button id="obtenerFecha">Obtener Fecha</button>
+     <div id="modal-carga" style="display: none;">
+        <div id="cargando" style="display: none;">
+            <i class="fas fa-circle-notch fa-spin fa-10x"></i>
+            <p>Cargando...</p>
+        </div>
+    </div>
+    <table id="tablaDatos" class="display">
         <thead>
             <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <!-- Los encabezados de fecha serán generados dinámicamente aquí -->
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Fecha</th>
+                <th>Horario Entrada</th>
+                <th>Horario Salida</th>
+                <th>Horas trabajadas</th>
+                <th>Total de horas</th>
             </tr>
         </thead>
-        <tbody id="table-body"></tbody>
+        <tbody>
+             <!-- Aquí debes agregar las filas de datos -->
+        </tbody>
     </table>
-    <button id="export-button" class="btn btn-success">Export to Excel</button>
+
 
     <!-- Agregar un botón de exportación a Excel -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -33,59 +75,90 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script>
         // Hacer una solicitud Fetch a una API
-        $.ajax({
-            url: 'http://localhost:3000/users-by-registers',
-            method: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                const tableBody = $('#table-body');
+        const obtenerFechaButton = document.getElementById('obtenerFecha');
+        const fechaInput = document.getElementById('fecha');
 
-                // Obtén la lista de fechas únicas a partir de los datos
-                const uniqueDates = Array.from(new Set(data.flatMap(item => Object.keys(item.registrosDia))))
+        obtenerFechaButton.addEventListener('click', function () {
+            document.getElementById('modal-carga').style.display = 'block';
+            document.getElementById('cargando').style.display = 'block';
+            
+            const fechaSeleccionada = fechaInput.value;
+            $.ajax({
+                url: `http://localhost:3000/users-by-registers?fecha=${fechaSeleccionada}`,
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    let totalHoras = 0;
+                    function formatHoraFromDateTime(dateTimeString) {
+                        const dateTime = new Date(dateTimeString);
+                        const hora = dateTime.getHours();
+                        const minutos = dateTime.getMinutes();
+                        const horaFormateada = `${hora.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+                        return horaFormateada;
+                    }
+                    function calcularDiferenciaHoras(registroInicio, registroFin) {
+                        const horaInicio = new Date(registroInicio);
+                        const horaFin = new Date(registroFin);
+                        const diferenciaHoras = (horaFin - horaInicio) / (1000 * 60 * 60);
+                        totalHoras += diferenciaHoras;
+                        return { totalHoras: Math.abs(totalHoras.toFixed(2)), diferenciaHoras: Math.abs(diferenciaHoras.toFixed(2)) };
+                    }
+                    const table = $('#tablaDatos').DataTable();
 
-                // Agrega encabezados de fecha dinámicos
-                const headerRow = $('#attendance-table thead tr');
-                uniqueDates.forEach(date => {
-                    headerRow.append(`<th>${date}</th>`);
-                });
-                data.forEach(function (item) {
-                    // Agregar cada fila de datos a la tabla
-                    let row = '<tr><td>' + item.userId +
-                        '</td><td>' + item.name;
+                    data.forEach(function (item) {
+                        for (const fecha in item.registrosDia) {
+                            const registros = item.registrosDia[fecha];
 
-                    uniqueDates.forEach(date => {
-                        row += '<td>';
-                        if (item.registrosDia[date]) {
-                            item.registrosDia[date].forEach(function (registro) {
-                                row += registro.recordTime + '<br>';
-                            });
+                            const horaLlegada = registros[0] ? registros[0].recordTime : '';
+                            const horaSalida = registros[registros.length - 1] ? registros[registros.length - 1].recordTime : '';
+                            const diferenciaHoras = (new Date(registros[0].recordTime) - new Date(registros[registros.length - 1].recordTime)) / (1000 * 60 * 60);
+                            debugger
+                            table.row.add([
+                                item.userId,
+                                item.name,
+                                fecha,
+                                formatHoraFromDateTime(horaLlegada),
+                                formatHoraFromDateTime(horaSalida),
+                                calcularDiferenciaHoras(horaLlegada, horaSalida).diferenciaHoras,
+                                calcularDiferenciaHoras(horaLlegada, horaSalida).totalHoras
+                                // Math.abs(diferenciaHoras.toFixed(2))
+                            ]).draw();
                         }
-                        row += '</td>';
                     });
-                    tableBody.append(row);
-                });
-            },
-            error: function () {
-                console.log('Error al cargar los datos de la API.');
-            }
+                    // debugger
+                    document.getElementById('modal-carga').style.display = 'none';
+                    document.getElementById('cargando').style.display = 'none';
+                    const newTable = table.DataTable();
+                    newTable.buttons().container().appendTo('#tablaDatos_wrapper');
+                    
+
+                },
+                error: function () {
+                    console.log('Error al cargar los datos de la API.');
+                    document.getElementById('cargando').style.display = 'none';
+                    document.getElementById('modal-carga').style.display = 'none';
+                }
+            });
         });
+
+
 
         // Agregar la funcionalidad de exportación al botón
         $('#export-button').on('click', function () {
             // Exportar la tabla a un archivo Excel
             $('#attendance-table').tableExport({ type: 'excel', escape: 'false' });
         });
-        $(document).ready(function() {
-    $('#attendance-table').DataTable( {
-        dom: 'Bfrtip',
-        buttons: [
-            'copyHtml5',
-            'excelHtml5',
-            'csvHtml5',
-            'pdfHtml5'
-        ]
-    } );
-} );
+        $(document).ready(function () {
+            $('#tablaDatos').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copyHtml5',
+                    'excelHtml5',
+                    'csvHtml5',
+                    'pdfHtml5'
+                ]
+            });
+        });
     </script>
 </body>
 
