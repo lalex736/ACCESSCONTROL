@@ -17,50 +17,49 @@ app.get('/users', async (req, res) => {
 });
 
 app.get('/users-by-registers', async (req, res) => {
-
-  const zkInstance = new ZKLib('181.48.129.126', 4370, 50000, 4000, '0');
-  await zkInstance.createSocket();
-  console.log(req.query.fecha)
-  const user = await zkInstance.getUsers();
-  const registers = await zkInstance.getAttendances();
-  //  const fechaDeseada = new Date('2023-02-01'); // Cambia la fecha a tu mes deseado
-  const fechaParam = req.query.fecha;
-
-  // Divide la fechaParam en año y mes
-  const [añoDeseado, mesDeseado] = fechaParam.split('-').map(Number);
-
-  const resultadosFiltrados = registers.data.filter(item => {
-    const recordTime = new Date(item.recordTime);
-    return recordTime.getFullYear() === añoDeseado && recordTime.getMonth() + 1 === mesDeseado;
-  });
-
+  const tienda = req.query.tienda
   try {
+    const zkInstance = new ZKLib(tienda, 4370, 50000, 4000, '0');
+    await zkInstance.createSocket();
 
-  const usuariosConRegistros = user.data.map((usuario) => {
+    const user = await zkInstance.getUsers();
+    const registers = await zkInstance.getAttendances();
+    //  const fechaDeseada = new Date('2023-02-01'); // Cambia la fecha a tu mes deseado
+    const fechaParam = req.query.fecha;
 
-    const registrosUsuario = resultadosFiltrados.filter((registro) => {
-      return registro.deviceUserId === usuario.userId || registro.deviceUserId === usuario.userId;
+    // Divide la fechaParam en año y mes
+    const [añoDeseado, mesDeseado] = fechaParam.split('-').map(Number);
+
+    const resultadosFiltrados = registers.data.filter(item => {
+      const recordTime = new Date(item.recordTime);
+      return recordTime.getFullYear() === añoDeseado && recordTime.getMonth() + 1 === mesDeseado;
     });
 
-    const registrosPorDia = {};
-    registrosUsuario.forEach((registro) => {
-      const fechaRegistro = new Date(registro.recordTime).toLocaleDateString();
+    const usuariosConRegistros = user.data.map((usuario) => {
 
-      if (!registrosPorDia[fechaRegistro]) {
-        registrosPorDia[fechaRegistro] = [];
-      }
+      const registrosUsuario = resultadosFiltrados.filter((registro) => {
+        return registro.deviceUserId === usuario.userId || registro.deviceUserId === usuario.userId;
+      });
 
-      registrosPorDia[fechaRegistro].push(registro);
+      const registrosPorDia = {};
+      registrosUsuario.forEach((registro) => {
+        const fechaRegistro = new Date(registro.recordTime).toLocaleDateString();
 
+        if (!registrosPorDia[fechaRegistro]) {
+          registrosPorDia[fechaRegistro] = [];
+        }
+
+        registrosPorDia[fechaRegistro].push(registro);
+
+      });
+
+      return { ...usuario, registrosDia: registrosPorDia };
     });
 
-    return { ...usuario, registrosDia: registrosPorDia };
-  });
-
-  res.send(usuariosConRegistros);
+    res.send(usuariosConRegistros);
 
   } catch (error) {
-  console.log(error)  
+    console.log(error)
   }
 });
 

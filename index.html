@@ -7,14 +7,15 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <style>
-          #modal-carga {
+        #modal-carga {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente oscuro */
+            background: rgba(0, 0, 0, 0.5);
+            /* Fondo semitransparente oscuro */
             z-index: 9999;
             text-align: center;
         }
@@ -31,15 +32,23 @@
             border-radius: 10px;
             /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
         }
-
     </style>
 </head>
 
 <body>
     <label for="fecha">Selecciona una fecha:</label>
     <input type="month" id="fecha" name="fecha">
+    <label for="tiendas">Selecciona una tienda:</label>
+    <select id="tiendas" name="tienda">
+        <option value="181.48.190.38">VICTORIA'S SECRET MEDELLIN</option>
+        <option value="190.144.104.46">VICTORIA'S SECRET JARDIN</option>
+        <option value="190.85.103.188">VICTORIA'S SECRET CACIQUE</option>
+        <option value="181.48.213.126">BATH & BODY WORKS BARRANQUILLA</option>
+        <option value="181.48.212.38">VICTORIA'S SECRET BARRANQUILLA</option>
+        <option value="181.48.129.126">VICTORIA'S SECRET TITAN</option>
+    </select>
     <button id="obtenerFecha">Obtener Fecha</button>
-     <div id="modal-carga" style="display: none;">
+    <div id="modal-carga" style="display: none;">
         <div id="cargando" style="display: none;">
             <i class="fas fa-circle-notch fa-spin fa-10x"></i>
             <p>Cargando...</p>
@@ -54,11 +63,14 @@
                 <th>Horario Entrada</th>
                 <th>Horario Salida</th>
                 <th>Horas trabajadas</th>
+                <th>Horas extra</th>
+                <th>Total de horas extra</th>
                 <th>Total de horas</th>
+
             </tr>
         </thead>
         <tbody>
-             <!-- Aquí debes agregar las filas de datos -->
+            <!-- Aquí debes agregar las filas de datos -->
         </tbody>
     </table>
 
@@ -81,14 +93,15 @@
         obtenerFechaButton.addEventListener('click', function () {
             document.getElementById('modal-carga').style.display = 'block';
             document.getElementById('cargando').style.display = 'block';
-            
+            const tiendas = document.getElementById('tiendas').value
             const fechaSeleccionada = fechaInput.value;
             $.ajax({
-                url: `http://localhost:3000/users-by-registers?fecha=${fechaSeleccionada}`,
+                url: `http://localhost:3000/users-by-registers?fecha=${fechaSeleccionada}&tienda=${tiendas}`,
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
                     let totalHoras = 0;
+                    let totalHorasExtra = 0;
                     function formatHoraFromDateTime(dateTimeString) {
                         const dateTime = new Date(dateTimeString);
                         const hora = dateTime.getHours();
@@ -99,9 +112,18 @@
                     function calcularDiferenciaHoras(registroInicio, registroFin) {
                         const horaInicio = new Date(registroInicio);
                         const horaFin = new Date(registroFin);
-                        const diferenciaHoras = (horaFin - horaInicio) / (1000 * 60 * 60);
+                        let diferenciaHoras = (horaFin - horaInicio) / (1000 * 60 * 60);
+                        if (Math.abs(diferenciaHoras.toFixed(2)) !== 0) {
+                            diferenciaHoras = diferenciaHoras - 1
+                        }
+                        let horasExtra = 0;
+
+                        if (diferenciaHoras > 8) {
+                            horasExtra = diferenciaHoras - 8;
+                            totalHorasExtra += horasExtra
+                        }
                         totalHoras += diferenciaHoras;
-                        return { totalHoras: Math.abs(totalHoras.toFixed(2)), diferenciaHoras: Math.abs(diferenciaHoras.toFixed(2)) };
+                        return { totalHoras: Math.abs(totalHoras.toFixed(2)), diferenciaHoras: Math.abs(diferenciaHoras.toFixed(2)), horasExtra };
                     }
                     const table = $('#tablaDatos').DataTable();
 
@@ -111,26 +133,32 @@
 
                             const horaLlegada = registros[0] ? registros[0].recordTime : '';
                             const horaSalida = registros[registros.length - 1] ? registros[registros.length - 1].recordTime : '';
-                            const diferenciaHoras = (new Date(registros[0].recordTime) - new Date(registros[registros.length - 1].recordTime)) / (1000 * 60 * 60);
-                            debugger
+                            // const diferenciaHoras = (new Date(registros[0].recordTime) - new Date(registros[registros.length - 1].recordTime)) / (1000 * 60 * 60);
+
+                            const { diferenciaHoras, totalHoras, horasExtra } = calcularDiferenciaHoras(horaLlegada, horaSalida)
+
                             table.row.add([
                                 item.userId,
                                 item.name,
                                 fecha,
                                 formatHoraFromDateTime(horaLlegada),
                                 formatHoraFromDateTime(horaSalida),
-                                calcularDiferenciaHoras(horaLlegada, horaSalida).diferenciaHoras,
-                                calcularDiferenciaHoras(horaLlegada, horaSalida).totalHoras
-                                // Math.abs(diferenciaHoras.toFixed(2))
+                                diferenciaHoras,
+                                parseInt(horasExtra),
+                                parseInt(totalHorasExtra),
+                                totalHoras
                             ]).draw();
                         }
+
+                        totalHorasExtra = 0
+                        totalHoras = 0
                     });
                     // debugger
                     document.getElementById('modal-carga').style.display = 'none';
                     document.getElementById('cargando').style.display = 'none';
                     const newTable = table.DataTable();
                     newTable.buttons().container().appendTo('#tablaDatos_wrapper');
-                    
+
 
                 },
                 error: function () {
