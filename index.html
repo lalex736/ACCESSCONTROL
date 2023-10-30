@@ -3,10 +3,17 @@
 
 <head>
     <title>Ejemplo de Solicitud Fetch con jQuery</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
         #modal-carga {
             display: none;
             position: fixed;
@@ -32,48 +39,181 @@
             border-radius: 10px;
             /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
         }
-    </style>
+
+        header {
+            background-color: rgb(249, 226, 231);
+            padding: 20px;
+            text-align: end;
+        }
+
+        /* Estilo para el texto dentro del encabezado */
+        header h1 {
+            color: white;
+            /* Cambia el color del texto a uno que contraste con el fondo */
+        }
+
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Estilo para la barra lateral (sidebar) */
+        .sidebar {
+    width: 20%; /* Ancho de la barra lateral */
+    background-color: #f7f7f8; /* Color de fondo de la barra lateral */
+    color: black; /* Color del texto en la barra lateral */
+    padding: 20px;
+    /* border: 2px solid black;  */
+    /* Agrega un borde negro de 2px alrededor de la barra lateral */
+}
+
+.sidebar h2 {
+    border-bottom: 2px solid black; /* Agrega un borde inferior a la etiqueta h2 */
+    padding-bottom: 10px; /* Espacio entre el título y la lista */
+}
+
+.sidebar ul {
+    list-style: none; /* Quita los puntos de la lista */
+    padding: 0;
+}
+
+.sidebar li {
+    border-top: 1px solid black; /* Agrega un borde superior a cada elemento de la lista */
+    padding: 10px 0; /* Espacio vertical entre elementos de la lista */
+}
+
+.sidebar li:first-child {
+    border-top: none; /* Quita el borde superior del primer elemento de la lista para evitar duplicación */
+}
+
+        /* Estilo para el contenido principal */
+        .content {
+            flex: 1;
+            /* El contenido principal ocupará el espacio restante */
+            padding: 20px;
+        }
+
+        #user-icon {
+            color: #007bff;
+            /* Cambia el color del icono (azul en este caso) */
+            font-size: 24px;
+            /* Cambia el tamaño del icono */
+            margin-right: 10px;
+            /* Agrega un espacio a la derecha del icono para separarlo del texto */
+        }
+
+        .form-container {
+        text-align: center;
+        background-color: #f7f7f8;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #ccc;
+        /* max-width: 400px; */
+        margin: 0 auto;
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .form-container label {
+        display: block;
+        margin: 10px 0;
+        font-weight: bold;
+    }
+
+    .form-container select,
+    .form-container input[type="month"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .form-container select {
+        appearance: none;
+    }
+
+    .form-container button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 1px 30px;
+        height: 50px;
+        cursor: pointer;
+        margin-top: 11px;
+        margin-left: 10px;
+    }
+
+    .form-container button:hover {
+        background-color: #0056b3;
+    }
+</style>
 </head>
 
 <body>
-    <label for="fecha">Selecciona una fecha:</label>
-    <input type="month" id="fecha" name="fecha">
-    <label for="tiendas">Selecciona una tienda:</label>
-    <select id="tiendas" name="tienda">
-        <option value="181.48.190.38">VICTORIA'S SECRET MEDELLIN</option>
-        <option value="190.144.104.46">VICTORIA'S SECRET JARDIN</option>
-        <option value="190.85.103.188">VICTORIA'S SECRET CACIQUE</option>
-        <option value="181.48.213.126">BATH & BODY WORKS BARRANQUILLA</option>
-        <option value="181.48.212.38">VICTORIA'S SECRET BARRANQUILLA</option>
-        <option value="181.48.129.126">VICTORIA'S SECRET TITAN</option>
-    </select>
-    <button id="obtenerFecha">Obtener Fecha</button>
-    <div id="modal-carga" style="display: none;">
-        <div id="cargando" style="display: none;">
-            <i class="fas fa-circle-notch fa-spin fa-10x"></i>
-            <p>Cargando...</p>
+    <header>
+        <i class="fas fa-user fa-8x" id="user-icon"></i>
+
+    </header>
+
+    <div class="container">
+
+        <div class="sidebar">
+            <!-- Contenido de la barra lateral -->
+            <h2>Menú</h2>
+            <ul>
+                <li>REGISTRO HORAS</li>
+                <li></li>
+               
+            </ul>
+        </div>
+        <div class="content">
+            <div class="form-container">
+                <label for="fecha">Selecciona una fecha:</label>
+                <input type="month" id="fecha" name="fecha">
+            
+                <label for="tiendas">Selecciona una tienda:</label>
+                <select id="tiendas" name="tienda">
+                    <option value="181.48.190.38">VICTORIA'S SECRET MEDELLIN</option>
+                    <option value="190.144.104.45">VICTORIA'S SECRET JARDIN</option>
+                    <option value="190.145.97.198">BATH & BODY WORKS VIVA BARRANQUILLA</option>
+                    <option value="181.48.129.126">VICTORIA'S SECRET TITAN</option>
+                    <option VALUE="181.49.252.59">BATH & BODY WORKS TESORO MEDELLIN</option>                    
+                </select>
+            
+                <button id="obtenerFecha">Obtener Fecha</button>
+            </div>
+            <div id="modal-carga" style="display: none;">
+                <div id="cargando" style="display: none;">
+                    <i class="fas fa-circle-notch fa-spin fa-10x"></i>
+                    <p>Cargando...</p>
+                </div>
+            </div>
+            <table id="tablaDatos" class="display">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Fecha</th>
+                        <th>Horario Entrada</th>
+                        <th>Horario Salida</th>
+                        <th>Horas trabajadas</th>
+                        <th>Horas extra</th>
+                        <th>Total de horas extra</th>
+                        <th>Total de horas</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí debes agregar las filas de datos -->
+                </tbody>
+            </table>
+
         </div>
     </div>
-    <table id="tablaDatos" class="display">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Fecha</th>
-                <th>Horario Entrada</th>
-                <th>Horario Salida</th>
-                <th>Horas trabajadas</th>
-                <th>Horas extra</th>
-                <th>Total de horas extra</th>
-                <th>Total de horas</th>
-
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Aquí debes agregar las filas de datos -->
-        </tbody>
-    </table>
-
 
     <!-- Agregar un botón de exportación a Excel -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
